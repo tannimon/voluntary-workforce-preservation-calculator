@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A free, browser-based tool for modeling voluntary workforce cost-contribution scenarios across hospital roles — with built-in pay-equity analysis, FLSA-aware handling of salaried staff, FTE translation, and shareable scenario links. No data is stored.">
+<title>Voluntary Workforce Preservation Calculator — Contribution Scenarios with Pay-Equity Analysis</title>
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+
+<!-- Social preview. Replace the base URL below with your GitHub Pages URL so link previews resolve the image. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Voluntary Workforce Preservation Calculator">
+<meta property="og:description" content="Model voluntary contribution scenarios as an alternative to hospital layoffs — evaluated by both financial impact and distributional fairness. No build, private by construction.">
+<meta property="og:image" content="https://USERNAME.github.io/workforce-preservation-calculator/assets/og-card.png">
+<meta property="og:url" content="https://USERNAME.github.io/workforce-preservation-calculator/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Voluntary Workforce Preservation Calculator">
+<meta name="twitter:description" content="Voluntary contribution scenarios with pay-equity analysis. Model alternatives to hospital workforce reductions.">
+<meta name="twitter:image" content="https://USERNAME.github.io/workforce-preservation-calculator/assets/og-card.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1eb;
+    --surface: #fff;
+    --surface2: #f9f7f3;
+    --border: #e0dbd0;
+    --ink: #1a1814;
+    --ink2: #5a5650;
+    --ink3: #9a9590;
+    --accent: #2d6a4f;
+    --accent2: #52b788;
+    --accent3: #b7e4c7;
+    --warn: #c9763a;
+    --warn-light: #fdf3e7;
+    --red: #c0392b;
+    --gold: #b8860b;
+    --radius: 4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .page-header {
+    background: var(--ink);
+    color: #fff;
+    padding: 36px 48px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    border: 40px solid rgba(82,183,136,0.15);
+  }
+  .page-header::after {
+    content: '';
+    position: absolute;
+    right: 80px; bottom: -80px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    border: 25px solid rgba(82,183,136,0.1);
+  }
+  .header-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 10px;
+  }
+  .page-header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 34px;
+    line-height: 1.15;
+    font-weight: 400;
+    max-width: 560px;
+    margin-bottom: 10px;
+  }
+  .page-header p {
+    color: rgba(255,255,255,0.55);
+    font-size: 14px;
+    max-width: 500px;
+  }
+
+  .main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+  }
+
+  /* TAB NAV */
+  .tab-nav {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 28px;
+    background: var(--border);
+    padding: 2px;
+    border-radius: 6px;
+    width: fit-content;
+  }
+  .tab-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 20px;
+    border: none;
+    background: transparent;
+    color: var(--ink2);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .tab-btn.active {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    font-weight: 400;
+    margin-bottom: 20px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    flex-shrink: 0;
+  }
+
+  /* FORM GRID */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid.cols1 { grid-template-columns: 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .field input, .field select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--accent2);
+    background: var(--surface);
+  }
+  .field input[type="range"] {
+    padding: 6px 0;
+    background: transparent;
+    border: none;
+    accent-color: var(--accent);
+  }
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink3);
+    margin-top: -4px;
+  }
+  .range-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-top: 4px;
+  }
+
+  /* SECTION DIVIDER */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    padding: 16px 0 10px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  /* MODEL SELECTOR */
+  .model-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .model-chip {
+    font-size: 13px;
+    padding: 6px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--ink2);
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .model-chip.active {
+    border-color: var(--accent);
+    background: var(--accent3);
+    color: var(--accent);
+  }
+
+  /* RESULTS */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .result-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+  }
+  .result-box.highlight {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .result-box.highlight .result-label { color: rgba(255,255,255,0.7); }
+  .result-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink3);
+    margin-bottom: 6px;
+    font-weight: 500;
+    line-height: 1.3;
+    min-height: 2.6em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .result-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--ink);
+  }
+  .result-box.highlight .result-val { color: #fff; }
+  .result-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink3);
+    margin-top: 4px;
+  }
+
+  /* EQUITY NOTE */
+  .equity-note {
+    background: var(--warn-light);
+    border: 1px solid #e8c99a;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--warn);
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+  .equity-note strong { font-weight: 600; }
+
+  /* DEFICIT CONTEXT */
+  .deficit-bar-wrap {
+    margin-top: 16px;
+  }
+  .deficit-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink2);
+    margin-bottom: 6px;
+  }
+  .deficit-bar-track {
+    background: var(--border);
+    border-radius: 4px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .deficit-bar-fill {
+    height: 100%;
+    background: var(--accent2);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    max-width: 100%;
+  }
+  .deficit-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink3);
+    margin-top: 6px;
+  }
+
+  /* MULTI-ROLE TABLE */
+  .role-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .role-table th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink3);
+    font-weight: 500;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .role-table td {
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .role-table tr:last-child td { border-bottom: none; }
+  .role-table input, .role-table select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    width: 100%;
+    color: var(--ink);
+    outline: none;
+  }
+  .role-table input:focus, .role-table select:focus {
+    border-color: var(--accent2);
+    background: var(--surface);
+  }
+  .role-table .savings-cell {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .role-table .del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink3);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: all 0.15s;
+  }
+  .role-table .del-btn:hover { background: #fee2e2; color: var(--red); }
+
+  .add-row-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent3);
+    border: 1.5px dashed var(--accent2);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.15s;
+  }
+  .add-row-btn:hover { background: #95d5b2; }
+
+  /* SUMMARY TOTALS */
+  .summary-totals {
+    background: var(--ink);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .st-item { text-align: center; }
+  .st-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 6px;
+  }
+  .st-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: #fff;
+  }
+  .st-val.green { color: var(--accent2); }
+
+  /* PRESETS */
+  .preset-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .preset-chip {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--ink2);
+    transition: all 0.15s;
+  }
+  .preset-chip:hover { border-color: var(--accent2); color: var(--accent); }
+
+  .print-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all 0.15s;
+    float: right;
+  }
+  .print-btn:hover { background: var(--surface2); }
+
+  .info-pill {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    background: var(--accent3);
+    color: var(--accent);
+    border-radius: 10px;
+    padding: 2px 8px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 680px) {
+    .page-header { padding: 28px 20px; }
+    .page-header h1 { font-size: 26px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.cols3 { grid-template-columns: 1fr 1fr; }
+    .results-grid { grid-template-columns: 1fr 1fr; }
+    .summary-totals { grid-template-columns: 1fr 1fr; }
+    .main { padding: 24px 16px 60px; }
+  }
+  /* A11Y: skip link + visible focus */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: var(--radius);
+    z-index: 100;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .skip-link:focus { left: 16px; top: 16px; }
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  select:focus-visible, [role="tab"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  @media print {
+    .tab-nav, .add-row-btn, .del-btn, .print-btn, .preset-chips, .model-tabs { display: none !important; }
+    .panel { display: block !important; }
+    body { background: #fff; }
+    .page-header { background: #1a1814 !important; -webkit-print-color-adjust: exact; }
+    .role-table select { display: none !important; }
+    .role-table .print-val { display: inline !important; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to calculator</a>
+
+<header class="page-header">
+  <div class="header-label">Workforce Preservation Modeling · Pay-Equity Analysis</div>
+  <h1>Voluntary Workforce<br>Preservation Calculator</h1>
+  <p style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.04em;color:rgba(255,255,255,0.5);margin-bottom:10px;">Voluntary contribution scenarios with pay-equity analysis</p>
+  <p>Model whether small, broadly shared contributions could reduce the need for layoffs, furloughs, or service cuts during periods of financial stress — evaluated by both financial impact and distributional fairness.</p>
+  <p style="margin-top:18px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.32);letter-spacing:0.08em;">Decision-support estimate — not legal, HR, or payroll advice</p>
+</header>
+
+<main class="main" id="main">
+
+  <!-- WHY THIS EXISTS -->
+  <section aria-labelledby="why-heading" style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:24px 28px;margin-bottom:28px;">
+    <h2 id="why-heading" style="font-family:'DM Serif Display',serif;font-size:20px;font-weight:400;margin-bottom:12px;color:var(--ink);">Why this tool exists</h2>
+    <div style="font-size:14px;color:var(--ink2);line-height:1.7;max-width:760px;">
+      <p style="margin-bottom:12px;">Hospitals across the U.S. are under sustained financial pressure from declining reimbursement, rising operating costs, and reductions in public funding. Because labor is typically a hospital's largest controllable operating expense, workforce reductions — hiring freezes, layoffs, furloughs, service cuts — often become the default response when revenue declines. Those reductions fall hardest on the people who deliver care.</p>
+      <p style="margin-bottom:12px;">This calculator explores one alternative. The goal is <strong>not the savings</strong> — it's preserving jobs, care teams, and institutional knowledge. Savings are simply the mechanism. It models whether many people making small, voluntary, transparent contributions could reduce the need to eliminate positions.</p>
+      <p style="margin-bottom:12px;">The calculator is intentionally designed to evaluate proportional burden-sharing across income levels. Every scenario includes equity measures, so the distribution of contributions is visible rather than assumed.</p>
+      <p style="margin-bottom:0;">It advocates for no specific program. <strong>Every modeled dollar should be weighed against the human cost of workforce reductions — this calculator exists to make those tradeoffs transparent, not to decide them.</strong></p>
+    </div>
+  </section>
+
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;">
+    <button type="button" class="print-btn" onclick="copyScenarioLink(this)" style="float:none;margin:0;"><span aria-hidden="true">🔗</span> Copy scenario link</button>
+    <button type="button" class="print-btn" onclick="window.print()" style="float:none;margin:0;"><span aria-hidden="true">⎙</span> Print summary</button>
+  </div>
+
+  <div class="tab-nav" role="tablist" aria-label="Calculator views">
+    <button type="button" class="tab-btn active" id="tab-single" role="tab" aria-selected="true" aria-controls="panel-single" onclick="switchTab('single', this)">Single Role</button>
+    <button type="button" class="tab-btn" id="tab-multi" role="tab" aria-selected="false" aria-controls="panel-multi" tabindex="-1" onclick="switchTab('multi', this)">Multi-Role Summary</button>
+    <button type="button" class="tab-btn" id="tab-top10" role="tab" aria-selected="false" aria-controls="panel-top10" tabindex="-1" onclick="switchTab('top10', this)">Higher Earners</button>
+    <button type="button" class="tab-btn" id="tab-math" role="tab" aria-selected="false" aria-controls="panel-math" tabindex="-1" onclick="switchTab('math', this)">Show the Math</button>
+  </div>
+
+  <!-- COMBINED IMPACT BAR -->
+  <div id="combined-bar-wrap" style="background:var(--ink);border-radius:8px;padding:16px 22px;margin-bottom:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+    <div style="flex-shrink:0;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:2px;">Potential Workforce Preservation Impact</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;" id="combined-ann">$0</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px;">estimated annual payroll preserved · all groups</div>
+    </div>
+    <div style="flex:1;min-width:180px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px;">
+        <span id="deficit-bar-label">vs $50M operating loss</span>
+        <span id="combined-pct" style="font-family:'DM Mono',monospace;color:var(--accent2);">0%</span>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:4px;height:8px;overflow:hidden;">
+        <div id="combined-bar" style="height:100%;background:var(--accent2);border-radius:4px;width:0%;transition:width 0.5s ease;"></div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:6px;">Best understood as one component of a broader financial recovery strategy.</div>
+    </div>
+    <div style="display:flex;gap:16px;flex-shrink:0;flex-wrap:wrap;align-items:center;">
+      <div style="text-align:center;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em;">Single Role</div>
+        <div style="font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,0.6);" id="combined-single">$0</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em;">Multi-Role</div>
+        <div style="font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,0.6);" id="combined-multi">$0</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em;">Higher Earners</div>
+        <div style="font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,0.6);" id="combined-top10">$0</div>
+      </div>
+      <div style="border-left:1px solid rgba(255,255,255,0.1);padding-left:16px;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Operating Loss Reference</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,0.5);">$</span>
+          <input type="number" id="deficit-input" value="50000000" min="1000000" step="1000000"
+            aria-label="Organization operating loss reference figure, in dollars"
+            oninput="updateDeficitLabel();calcSingle();calcMulti();calcTop10();"
+            style="font-family:'DM Mono',monospace;font-size:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:4px;color:#fff;padding:5px 8px;width:130px;outline:none;"
+            onfocus="this.style.borderColor='var(--accent2)'" onblur="this.style.borderColor='rgba(255,255,255,0.2)'">
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.2);margin-top:3px;">example figure — edit to match your organization</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL ASSUMPTIONS -->
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:24px;font-size:13px;color:var(--ink2);">
+    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+      <input type="checkbox" id="load-fica" onchange="calcSingle();calcMulti();calcTop10()" style="width:16px;height:16px;accent-color:var(--accent);">
+      Include employer payroll tax (+7.65% FICA) in all savings figures
+    </label>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3);">Reduced wages also reduce the employer's matching payroll tax. Off = base wages only.</span>
+  </div>
+
+  <!-- ══════════════ SINGLE ROLE ══════════════ -->
+  <div id="panel-single" class="panel active" role="tabpanel" aria-labelledby="tab-single" tabindex="0">
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Role Configuration</div>
+
+      <div class="preset-chips">
+        <span style="font-size:12px;color:var(--ink3);align-self:center;margin-right:4px;">Quick fill:</span>
+        <button type="button" class="preset-chip" onclick="loadPreset('cna')">CNA / PCT</button>
+        <button type="button" class="preset-chip" onclick="loadPreset('rn')">RN (Staff)</button>
+        <button type="button" class="preset-chip" onclick="loadPreset('lpn')">LPN</button>
+        <button type="button" class="preset-chip" onclick="loadPreset('rt')">Resp. Therapist</button>
+        <button type="button" class="preset-chip" onclick="loadPreset('lab')">Lab / Imaging</button>
+        <button type="button" class="preset-chip" onclick="loadPreset('admin')">Admin / Clerical</button>
+        <button type="button" class="preset-chip" onclick="loadPreset('ma')">Medical Asst.</button>
+        <button type="button" class="preset-chip" onclick="loadPreset('remote')" style="border-color:#7c6fcd;color:#4c3fac;background:#ede9ff;">⌂ Remote</button>
+      </div>
+
+      <div class="form-grid cols3">
+        <div class="field">
+          <label>Role Name</label>
+          <input type="text" id="s-role" value="Registered Nurse (RN)" oninput="calcSingle()">
+        </div>
+        <div class="field">
+          <label>Hourly Wage ($)</label>
+          <input type="number" id="s-wage" value="45" min="10" max="250" step="0.50" oninput="calcSingle(); $('remote-note').style.display='none'">
+        </div>
+        <div class="field">
+          <label>Number of Employees</label>
+          <input type="number" id="s-count" value="50" min="1" max="50000" oninput="calcSingle()">
+        </div>
+      </div>
+
+      <div id="remote-note" style="display:none;margin-top:14px;background:#ede9ff;border:1px solid #c4b8f5;border-radius:6px;padding:13px 16px;font-size:13px;color:#4c3fac;line-height:1.55;">
+        <strong>Remote Worker note:</strong> Remote roles vary widely in compensation. Enter the specific hourly wage (or salary ÷ 2,080) for the workforce being modeled. Key considerations for this group: schedule flexibility makes them strong pilot candidates; time tracking may differ from on-site staff; contribution framing should avoid implying unequal expectations vs. on-site colleagues.
+      </div>
+
+      <div class="form-grid cols3" style="margin-top:16px;">
+        <div class="field">
+          <label>Shifts Per Week</label>
+          <select id="s-spw" onchange="calcSingle()">
+            <option value="3">3 (3×12hr pattern)</option>
+            <option value="4">4</option>
+            <option value="5" selected>5 (standard)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Weeks Per Year</label>
+          <input type="number" id="s-wpy" value="50" min="1" max="52" oninput="calcSingle()">
+        </div>
+        <div class="field">
+          <label>Participation Rate (%)</label>
+          <input type="number" id="s-part" value="75" min="1" max="100" oninput="calcSingle()">
+        </div>
+      </div>
+
+      <div class="section-label">Equity Model &amp; Contribution</div>
+
+      <div class="model-tabs">
+        <button type="button" class="model-chip active" id="chip-pct" onclick="setModel('pct')">Percentage of Hours <span style="font-size:10px;opacity:0.7;">· proportional</span></button>
+        <button type="button" class="model-chip" id="chip-tiered" onclick="setModel('tiered')">Tiered by Pay Band</button>
+        <button type="button" class="model-chip" id="chip-pto" onclick="setModel('pto')">PTO Donation</button>
+        <button type="button" class="model-chip" id="chip-flat" onclick="setModel('flat')">Flat Minutes</button>
+      </div>
+
+      <!-- Flat model -->
+      <div id="model-flat" style="display:none;">
+        <div class="field" style="max-width:320px;">
+          <label>Minutes Early Clock-Out Per Shift</label>
+          <input type="range" id="s-minutes" min="1" max="15" value="10" oninput="syncRange();calcSingle()">
+          <div class="range-labels"><span>1 min</span><span>5</span><span>10</span><span>15 min</span></div>
+          <div class="range-val" id="range-display">10 minutes per shift</div>
+        </div>
+        <div class="equity-note" style="margin-top:12px;">
+          <strong>Simplest to administer, least proportional.</strong> A fixed number of minutes asks the same share of pay from everyone on the <em>same</em> schedule — but a different share than salaried staff or staff on other shift patterns. Watch the % of pay readout below, and compare against salaried contributions in the Higher Earners tab before choosing this model.
+        </div>
+      </div>
+
+      <!-- Tiered model -->
+      <div id="model-tiered" style="display:none;">
+        <p style="font-size:13px;color:var(--ink2);margin-bottom:12px;">Minutes auto-assigned by wage. Values are editable:</p>
+        <div class="form-grid cols3">
+          <div class="field">
+            <label>Under $25/hr → minutes</label>
+            <input type="number" id="t-low" value="3" min="1" max="15" oninput="calcSingle()">
+          </div>
+          <div class="field">
+            <label>$25–$40/hr → minutes</label>
+            <input type="number" id="t-mid" value="7" min="1" max="15" oninput="calcSingle()">
+          </div>
+          <div class="field">
+            <label>$40+/hr → minutes</label>
+            <input type="number" id="t-high" value="12" min="1" max="15" oninput="calcSingle()">
+          </div>
+        </div>
+        <div class="equity-note" id="tier-assigned" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- Percentage model -->
+      <div id="model-pct">
+        <div class="field" style="max-width:320px;">
+          <label>% Reduction in Paid Hours</label>
+          <input type="range" id="s-pct" min="0.25" max="3" step="0.25" value="1" oninput="syncPct();calcSingle()">
+          <div class="range-labels"><span>0.25%</span><span>1%</span><span>2%</span><span>3%</span></div>
+          <div class="range-val" id="pct-display">1.00% of paid hours</div>
+        </div>
+        <div class="equity-note" style="margin-top:12px;">
+          <strong>Proportional by design:</strong> a set percentage of pay asks the same relative sacrifice at every wage — a $20/hr employee gives ~$100/yr while a $45/hr employee gives ~$225/yr, both 1% of pay. This is the default because fairness is the point.
+        </div>
+      </div>
+
+      <!-- PTO model -->
+      <div id="model-pto" style="display:none;">
+        <div class="form-grid" style="max-width:440px;">
+          <div class="field">
+            <label>PTO Hours Donated Per Employee / Year</label>
+            <input type="number" id="s-pto" value="8" min="1" max="80" step="0.5" oninput="calcSingle()">
+          </div>
+        </div>
+        <div class="equity-note" style="margin-top:12px;">
+          <strong>PTO donation:</strong> Employees elect to contribute a set number of PTO hours per year. Savings = donated hours × hourly wage × participating employees.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RESULTS -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Projected Savings <span class="info-pill" id="s-model-tag">Percentage of hours</span></div>
+
+      <div class="results-grid">
+        <div class="result-box">
+          <div class="result-label">Per Employee / Year</div>
+          <div class="result-val" id="r-pey">—</div>
+          <div class="result-sub" id="r-pey-sub"></div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Quarter (3 mo)</div>
+          <div class="result-val" id="r-qtr">—</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Annual (all participants)</div>
+          <div class="result-val" id="r-ann">—</div>
+          <div class="result-sub" id="r-fte"></div>
+        </div>
+        <div class="result-box highlight">
+          <div class="result-label">3-Year Total</div>
+          <div class="result-val" id="r-3yr">—</div>
+        </div>
+      </div>
+
+      <!-- Contribution as share of pay -->
+      <div id="r-share" style="margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px 16px;">
+        <span style="font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);font-weight:500;">Contribution as share of this role's pay</span>
+        <span id="r-share-val" style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent);">—</span>
+        <span id="r-share-note" style="font-size:12px;color:var(--ink2);flex:1;min-width:200px;"></span>
+      </div>
+
+      <div class="deficit-bar-wrap">
+        <div class="deficit-bar-label">
+          <span class="deficit-vs-label">% of operating loss addressed by this role group</span>
+          <span id="deficit-pct-val" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);">0%</span>
+        </div>
+        <div class="deficit-bar-track">
+          <div class="deficit-bar-fill" id="deficit-bar" style="width:0%"></div>
+        </div>
+        <div class="deficit-pct deficit-pct-label">Deficit reference: $50M operating loss</div>
+      </div>
+
+      <div class="equity-note" id="s-equity-note" style="margin-top:16px;display:none;"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════ MULTI-ROLE ══════════════ -->
+  <div id="panel-multi" class="panel" role="tabpanel" aria-labelledby="tab-multi" tabindex="0">
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Multi-Role / Department Modeler</div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:20px;">Add each role group, set wages and headcount. All rows use <strong>Flat minutes</strong> for comparability — tweak per row.</p>
+
+      <div style="overflow-x:auto;">
+        <table class="role-table" id="multi-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Wage ($/hr)</th>
+              <th># Employees</th>
+              <th>Min/Shift</th>
+              <th>Shifts/Wk</th>
+              <th>Wks/Yr</th>
+              <th>Part. %</th>
+              <th>Annual Savings</th>
+              <th>% of Pay</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="multi-tbody"></tbody>
+        </table>
+      </div>
+
+      <button type="button" class="add-row-btn" onclick="addMultiRow()">+ Add Role</button>
+
+      <div style="margin-top:16px;background:#ede9ff;border:1px solid #c4b8f5;border-radius:6px;padding:13px 16px;font-size:13px;color:#4c3fac;line-height:1.6;">
+        <strong>⌂ Remote row (highlighted purple):</strong> Wage must be entered manually — remote roles vary widely. This group is flagged as <strong>PILOT</strong> because scheduling flexibility and easier time tracking make them a lower-risk starting point for program rollout. Participation rate is set slightly higher (85%) to reflect this. All values should be adjusted to match the organization's workforce.
+      </div>
+    </div>
+
+    <div class="summary-totals" id="multi-summary">
+      <div class="st-item">
+        <div class="st-label">Total Employees</div>
+        <div class="st-val" id="mt-emp">—</div>
+      </div>
+      <div class="st-item">
+        <div class="st-label">Annual Savings</div>
+        <div class="st-val green" id="mt-ann">—</div>
+      </div>
+      <div class="st-item">
+        <div class="st-label">Quarterly Savings</div>
+        <div class="st-val" id="mt-qtr">—</div>
+      </div>
+      <div class="st-item">
+        <div class="st-label">3-Year Total</div>
+        <div class="st-val green" id="mt-3yr">—</div>
+      </div>
+    </div>
+
+    <!-- FAIRNESS VERDICT -->
+    <div class="card" id="fairness-card" style="margin-top:20px;">
+      <div class="card-title"><span class="dot"></span>Fairness Check</div>
+      <div id="fairness-verdict" role="status" aria-live="polite" style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);">
+        <span id="fairness-icon" style="font-size:24px;line-height:1.2;flex-shrink:0;">—</span>
+        <div>
+          <div id="fairness-label" style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink);margin-bottom:4px;">Add roles to evaluate fairness</div>
+          <div id="fairness-detail" style="font-size:13px;color:var(--ink2);line-height:1.65;"></div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--ink3);margin-top:10px;line-height:1.6;">Fairness compares what each role gives as a <strong>share of its own pay</strong>, not in dollars. A program is regressive when lower-paid staff give up a larger share of their income than higher-paid staff — the outcome this tool is built to help avoid. Adjust minutes, model, or participation per row until the burden is shared proportionally.</p>
+    </div>
+
+          <span id="mt-deficit-pct-val" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);">0%</span>
+        </div>
+        <div class="deficit-bar-track">
+          <div class="deficit-bar-fill" id="mt-deficit-bar" style="width:0%"></div>
+        </div>
+        <div class="deficit-pct">Best understood as one component of a broader financial recovery strategy.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════ TOP 10% ══════════════ -->
+  <div id="panel-top10" class="panel" role="tabpanel" aria-labelledby="tab-top10" tabindex="0">
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Why Salaried Earners Work Differently</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.8;">
+        Salaried exempt employees are paid a fixed amount regardless of hours worked. Under the <strong>Fair Labor Standards Act (FLSA)</strong>, docking pay for partial-day absences is generally not permitted without risking loss of exempt status — so "early clock-out" has no automatic payroll effect for this group.<br><br>
+        Two mechanisms may work for salaried staff:
+        <div style="margin:12px 0 0 0;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:14px;">
+            <div style="font-weight:600;color:var(--accent);margin-bottom:4px;">PTO / Vacation Donation</div>
+            <div style="font-size:12px;">Employees elect to forfeit a set number of PTO hours per year. PTO is a real balance-sheet liability — donating it reduces what the hospital owes. Cleanest option, no FLSA risk.</div>
+          </div>
+          <div style="background:#fefce8;border:1px solid #fde68a;border-radius:6px;padding:14px;">
+            <div style="font-weight:600;color:var(--gold);margin-bottom:4px;">Voluntary Salary Reduction</div>
+            <div style="font-size:12px;">A formal, temporary reduction in base pay (e.g. 1–2%). Most impactful financially. Requires a written agreement and may have state-level notice requirements. Symbolically powerful when leadership leads.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Top Earner Group Configuration</div>
+
+      <div class="form-grid cols3">
+        <div class="field">
+          <label>Total Hospital Employees</label>
+          <input type="number" id="t10-total" value="2000" min="10" oninput="calcTop10()">
+        </div>
+        <div class="field">
+          <label>Top Earner % (of workforce)</label>
+          <input type="number" id="t10-pct" value="10" min="1" max="50" oninput="calcTop10()">
+        </div>
+        <div class="field">
+          <label>Participation Rate (%)</label>
+          <input type="number" id="t10-part" value="80" min="1" max="100" oninput="calcTop10()">
+        </div>
+      </div>
+
+      <div class="section-label">Contribution Method</div>
+      <div class="model-tabs">
+        <button type="button" class="model-chip active" id="t10-chip-pto" onclick="setTop10Model('pto')">PTO Donation</button>
+        <button type="button" class="model-chip" id="t10-chip-sal" onclick="setTop10Model('sal')">Salary Reduction %</button>
+      </div>
+
+      <!-- PTO model -->
+      <div id="t10-model-pto">
+        <div class="field" style="max-width:320px;">
+          <label>PTO Hours Donated Per Employee / Year</label>
+          <input type="range" id="t10-pto-hrs" min="8" max="80" step="4" value="40" oninput="syncTop10PTO();calcTop10()">
+          <div class="range-labels"><span>8 hrs</span><span>40 hrs</span><span>80 hrs</span></div>
+          <div class="range-val" id="t10-pto-display">40 hours (1 week)</div>
+        </div>
+      </div>
+
+      <!-- Salary reduction model -->
+      <div id="t10-model-sal" style="display:none;">
+        <div class="field" style="max-width:320px;">
+          <label>Voluntary Salary Reduction (%)</label>
+          <input type="range" id="t10-sal-pct" min="0.5" max="5" step="0.5" value="1" oninput="syncTop10Sal();calcTop10()">
+          <div class="range-labels"><span>0.5%</span><span>1%</span><span>2%</span><span>5%</span></div>
+          <div class="range-val" id="t10-sal-display">1.0% salary reduction</div>
+        </div>
+        <div class="equity-note" style="margin-top:12px;">
+          <strong>FLSA note:</strong> A voluntary salary reduction must be documented in a written agreement with each employee. Consult HR/legal before implementation. Some states require advance notice periods.
+        </div>
+      </div>
+    </div>
+
+    <!-- Role bands -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Salary Band Breakdown <span class="info-pill">editable</span></div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:16px;">Typical top-earner bands — adjust to match the organization. Counts should sum to the top earner group size (shown below).</p>
+      <div style="overflow-x:auto;">
+        <table class="role-table" id="t10-table">
+          <thead>
+            <tr>
+              <th>Role / Band</th>
+              <th>Annual Salary ($)</th>
+              <th>Hourly Equiv.</th>
+              <th># People</th>
+              <th>PTO Value (donated hrs)</th>
+              <th>Salary Reduction Value</th>
+            </tr>
+          </thead>
+          <tbody id="t10-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink3);">
+        Group size from config above: <span id="t10-groupsize" style="color:var(--accent);font-weight:600;">—</span> &nbsp;|&nbsp; Rows total: <span id="t10-rowtotal" style="color:var(--ink2);">—</span>
+      </div>
+      <div id="t10-mismatch" role="status" aria-live="polite" style="display:none;margin-top:10px;background:var(--warn-light);border:1px solid #e8c99a;border-radius:6px;padding:10px 14px;font-size:12px;color:var(--warn);"></div>
+    </div>
+
+    <!-- Results -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Projected Impact — Top Earners</div>
+      <div class="results-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="result-box">
+          <div class="result-label">Participating Employees</div>
+          <div class="result-val" id="t10-r-emp">—</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Annual Savings</div>
+          <div class="result-val" id="t10-r-ann">—</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Quarterly Savings</div>
+          <div class="result-val" id="t10-r-qtr">—</div>
+        </div>
+        <div class="result-box highlight">
+          <div class="result-label">3-Year Total</div>
+          <div class="result-val" id="t10-r-3yr">—</div>
+        </div>
+      </div>
+
+      <div class="deficit-bar-wrap" style="margin-top:20px;">
+        <div class="deficit-bar-label">
+          <span class="deficit-vs-label">Higher Earners contribution vs $50M operating loss</span>
+          <span id="t10-deficit-pct-val" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);">0%</span>
+        </div>
+        <div class="deficit-bar-track">
+          <div class="deficit-bar-fill" id="t10-deficit-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;background:var(--ink);border-radius:8px;padding:20px 24px;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:14px;">Pay Equity Approach</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.8;" id="t10-equity-msg">
+          Configure the fields above to see equity analysis.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════ MATH ══════════════ -->
+  <div id="panel-math" class="panel" role="tabpanel" aria-labelledby="tab-math" tabindex="0">
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Core Formula</div>
+      <div style="background:var(--ink);color:#b7e4c7;font-family:'DM Mono',monospace;font-size:13px;padding:20px 24px;border-radius:6px;line-height:2.2;margin-bottom:18px;">
+        Per Employee / Year =<br>
+        &nbsp;&nbsp;(Minutes ÷ 60) × Hourly Wage × (Shifts/Wk × Weeks/Yr)<br><br>
+        Total Savings =<br>
+        &nbsp;&nbsp;Per-Employee Savings × (# Employees × Participation %)
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:var(--ink2);line-height:1.7;">
+        <div><strong>Flat minutes:</strong> same reduction for all employees — simplest to administer.</div>
+        <div><strong>Tiered by pay band:</strong> fewer minutes for lower wages — protects proportional take-home pay.</div>
+        <div><strong>Percentage of hours:</strong> e.g. 1% of annual paid hours — scales automatically with compensation.</div>
+        <div><strong>PTO donation:</strong> employees elect to forfeit PTO hours — no effect on daily scheduling.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Reference Calculations by Shift Pattern</div>
+      <p style="font-size:13px;color:var(--ink2);margin-bottom:6px;">The three most common shift patterns in acute care, shown side by side at <strong>5 min</strong> and <strong>10 min</strong> reductions per shift. All examples assume 50 working weeks per year.</p>
+      <div style="display:grid;grid-template-columns:1fr;gap:4px;margin-bottom:16px;">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3);padding:8px 0;border-bottom:1px solid var(--border);">
+          <span>🕐 <strong style="color:var(--ink2);">3×12</strong> = 150 shifts/yr &nbsp;·&nbsp; typical: RN, Resp. Therapist, CNA/PCT (acute)</span>
+          <span>🕐 <strong style="color:var(--ink2);">4×10</strong> = 200 shifts/yr &nbsp;·&nbsp; typical: some CNA, lab, imaging, admin</span>
+          <span>🕐 <strong style="color:var(--ink2);">5×8</strong> &nbsp;= 250 shifts/yr &nbsp;·&nbsp; typical: admin/clerical, medical assistants, remote staff</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="role-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Wage</th>
+              <th>Pattern</th>
+              <th>5 min/shift</th>
+              <th>10 min/shift</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background:#f5fdf8;">
+              <td><strong>RN (Staff)</strong></td><td>$45/hr</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;">3×12 · (3×50)=150</td>
+              <td class="savings-cell">(5÷60)×45×150 = <strong>$563</strong></td>
+              <td class="savings-cell">(10÷60)×45×150 = <strong>$1,125</strong></td>
+            </tr>
+            <tr style="background:#f5fdf8;">
+              <td><strong>Resp. Therapist</strong></td><td>$40/hr</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;">3×12 · (3×50)=150</td>
+              <td class="savings-cell">(5÷60)×40×150 = <strong>$500</strong></td>
+              <td class="savings-cell">(10÷60)×40×150 = <strong>$1,000</strong></td>
+            </tr>
+            <tr style="background:#f5fdf8;">
+              <td><strong>CNA / PCT (acute)</strong></td><td>$21/hr</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;">3×12 · (3×50)=150</td>
+              <td class="savings-cell">(5÷60)×21×150 = <strong>$263</strong></td>
+              <td class="savings-cell">(10÷60)×21×150 = <strong>$525</strong></td>
+            </tr>
+            <tr style="background:#fefaf4;">
+              <td><strong>CNA / PCT (alt)</strong></td><td>$21/hr</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;">4×10 · (4×50)=200</td>
+              <td class="savings-cell">(5÷60)×21×200 = <strong>$350</strong></td>
+              <td class="savings-cell">(10÷60)×21×200 = <strong>$700</strong></td>
+            </tr>
+            <tr style="background:#fefaf4;">
+              <td><strong>Lab / Imaging Tech</strong></td><td>$38/hr</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;">4×10 · (4×50)=200</td>
+              <td class="savings-cell">(5÷60)×38×200 = <strong>$633</strong></td>
+              <td class="savings-cell">(10÷60)×38×200 = <strong>$1,267</strong></td>
+            </tr>
+            <tr>
+              <td><strong>LPN</strong></td><td>$33/hr</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;">5×8 · (5×50)=250</td>
+              <td class="savings-cell">(5÷60)×33×250 = <strong>$688</strong></td>
+              <td class="savings-cell">(10÷60)×33×250 = <strong>$1,375</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Admin / Clerical</strong></td><td>$25/hr</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;">5×8 · (5×50)=250</td>
+              <td class="savings-cell">(5÷60)×25×250 = <strong>$521</strong></td>
+              <td class="savings-cell">(10÷60)×25×250 = <strong>$1,042</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Medical Assistant</strong></td><td>$24/hr</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;">5×8 · (5×50)=250</td>
+              <td class="savings-cell">(5÷60)×24×250 = <strong>$500</strong></td>
+              <td class="savings-cell">(10÷60)×24×250 = <strong>$1,000</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:12px;font-size:12px;">
+        <span style="background:#f5fdf8;border:1px solid #bbf7d0;border-radius:4px;padding:4px 10px;">🟢 3×12 pattern</span>
+        <span style="background:#fefaf4;border:1px solid #fde68a;border-radius:4px;padding:4px 10px;">🟡 4×10 pattern</span>
+        <span style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 10px;">⬜ 5×8 pattern</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Participation Sensitivity — 1,000 Employees, Avg $30/hr, 5×8 Pattern</div>
+      <table class="role-table">
+        <thead>
+          <tr><th>Participation</th><th>Staff Count</th><th>5 min/shift</th><th>10 min/shift</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>25%</td><td>250</td><td class="savings-cell">~$156K</td><td class="savings-cell">~$313K</td></tr>
+          <tr><td>50%</td><td>500</td><td class="savings-cell">~$313K</td><td class="savings-cell">~$625K</td></tr>
+          <tr><td>75%</td><td>750</td><td class="savings-cell">~$469K</td><td class="savings-cell">~$938K</td></tr>
+          <tr><td>100%</td><td>1,000</td><td class="savings-cell">~$625K</td><td class="savings-cell">~$1.25M</td></tr>
+        </tbody>
+      </table>
+      <div class="equity-note" style="margin-top:14px;">
+        <strong>Note:</strong> For 3×12 staff at the same wage, multiply by 0.6 (150÷250). Example: 75% participation at 10 min → ~$563K instead of $938K. Savings scale linearly — higher wages and higher participation drive the most impact.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Remote Workers — Quick Note</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;color:var(--ink2);line-height:1.7;">
+        <div>
+          Remote workers use the same formula as on-site staff and typically follow a 5×8 or 4×10 pattern. Their schedule flexibility and software-based time tracking make them a practical pilot group — early clock-out has no patient care impact.
+        </div>
+        <div style="background:var(--warn-light);border:1px solid #e8c99a;border-radius:6px;padding:12px;font-size:12px;color:var(--warn);">
+          <strong>⚠ Timekeeping caveat:</strong> If the system auto-fills early clock-out minutes from PTO/APL banks (e.g. Symplr), use a dedicated $0 pay code or the PTO donation model instead to avoid unintended leave drawdown.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Higher Earners — Why the Math Is Different</div>
+      <div style="background:var(--warn-light);border:1px solid #e8c99a;border-radius:6px;padding:14px 16px;font-size:13px;color:var(--warn);margin-bottom:16px;line-height:1.6;">
+        <strong>Early clock-out does not apply to salaried exempt employees.</strong> The standard minutes-per-shift formula cannot be used for this group. Under the FLSA, salaried exempt employees must receive their full salary in any week they perform work — docking pay for partial-day absences generally results in loss of exempt status, creating significant legal and payroll risk.
+      </div>
+      <p style="font-size:13px;color:var(--ink2);line-height:1.8;margin-bottom:14px;">
+        Two alternative mechanisms produce real savings for this group:
+      </p>
+      <table class="role-table" style="margin-bottom:16px;">
+        <thead>
+          <tr><th>Method</th><th>Formula</th><th>Example (Director, $145K salary)</th><th>Per Employee/Yr</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>PTO Donation</strong><br><span style="font-size:11px;color:var(--ink3);">No FLSA risk</span></td>
+            <td style="font-family:'DM Mono',monospace;font-size:12px;">Hours donated × (Salary ÷ 2,080)</td>
+            <td style="font-size:12px;">40 hrs × ($145,000 ÷ 2,080)</td>
+            <td class="savings-cell">$2,788</td>
+          </tr>
+          <tr>
+            <td><strong>Voluntary Salary Reduction 1%</strong><br><span style="font-size:11px;color:var(--ink3);">Requires written agreement</span></td>
+            <td style="font-family:'DM Mono',monospace;font-size:12px;">Salary × Reduction %</td>
+            <td style="font-size:12px;">$145,000 × 1%</td>
+            <td class="savings-cell">$1,450</td>
+          </tr>
+          <tr>
+            <td><strong>Voluntary Salary Reduction 2%</strong><br><span style="font-size:11px;color:var(--ink3);">Higher commitment</span></td>
+            <td style="font-family:'DM Mono',monospace;font-size:12px;">Salary × Reduction %</td>
+            <td style="font-size:12px;">$145,000 × 2%</td>
+            <td class="savings-cell">$2,900</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.8;">
+        <strong>Scale example:</strong> 300 top earners (avg salary $175,000) at 80% participation with a 1% voluntary salary reduction:<br>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;background:var(--surface2);padding:4px 10px;border-radius:4px;display:inline-block;margin:8px 0;">$175,000 × 1% × 300 × 80% = $420,000/year</span><br>
+        At 2%: <strong>$840,000/year</strong>. With PTO donation of 40 hrs each: ≈ <strong>$1.6M in liability reduction</strong>.
+      </div>
+      <div class="equity-note" style="margin-top:14px;">
+        <strong>Pay equity signal:</strong> Without proportional participation across pay levels, lower-paid employees would bear a relatively larger share of the total contribution effort. In this example, a director contributing $1,450–$2,900 annually compared to a CNA contributing approximately $875 (based on 10 minutes per shift) illustrates how absolute contributions scale differently. The tiered model is designed to align participation more closely with compensation to support overall fairness.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer style="background:var(--ink);color:rgba(255,255,255,0.6);padding:24px 48px;font-size:12px;line-height:1.7;">
+  <div style="max-width:980px;margin:0 auto;">
+    <strong style="color:rgba(255,255,255,0.8);font-family:'DM Serif Display',serif;font-weight:400;font-size:15px;">Voluntary Workforce Preservation Calculator</strong><br>
+    A decision-support tool for modeling voluntary workforce cost-contribution scenarios. All calculation happens in your browser — nothing is entered, transmitted, or stored on any server.
+    Figures are gross payroll estimates only and do not account for morale, turnover, or care-delivery impact. Consult HR and legal counsel before implementing any program.
+    &nbsp;·&nbsp; Built by Tanni Monroe · <span id="yr"></span> · Educational use.
+  </div>
+</footer>
+
+<script>
+// ── HELPERS ──
+const $ = id => document.getElementById(id);
+const fmt = n => n >= 1e6 ? `$${(n/1e6).toFixed(2)}M` : n >= 1e3 ? `$${Math.round(n).toLocaleString()}` : `$${Math.round(n)}`;
+
+let currentModel = 'pct';
+
+function switchTab(t, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+    b.setAttribute('tabindex', '-1');
+  });
+  $(`panel-${t}`).classList.add('active');
+  const tabBtn = btn || $(`tab-${t}`);
+  tabBtn.classList.add('active');
+  tabBtn.setAttribute('aria-selected', 'true');
+  tabBtn.setAttribute('tabindex', '0');
+  if (t === 'multi') calcMulti();
+  if (t === 'top10') calcTop10();
+}
+
+// Arrow-key navigation for the tablist (WAI-ARIA pattern)
+function initTablistKeys() {
+  const order = ['single', 'multi', 'top10', 'math'];
+  const tablist = document.querySelector('[role="tablist"]');
+  if (!tablist) return;
+  tablist.addEventListener('keydown', e => {
+    const cur = order.findIndex(t => $(`tab-${t}`).getAttribute('aria-selected') === 'true');
+    let next = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (cur + 1) % order.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (cur - 1 + order.length) % order.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = order.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    const btn = $(`tab-${order[next]}`);
+    switchTab(order[next], btn);
+    btn.focus();
+  });
+}
+
+// Associate every visible field label with its control so screen readers
+// and Lighthouse's label audit resolve names without hand-editing each input.
+function associateLabels() {
+  let n = 0;
+  document.querySelectorAll('.field').forEach(field => {
+    const label = field.querySelector('label');
+    const ctrl = field.querySelector('input, select, textarea');
+    if (!label || !ctrl) return;
+    if (!ctrl.id) ctrl.id = 'fld-' + (n++);
+    label.setAttribute('for', ctrl.id);
+  });
+}
+
+function setModel(m) {
+  currentModel = m;
+  ['flat','tiered','pct','pto'].forEach(x => {
+    $(`model-${x}`).style.display = x === m ? 'block' : 'none';
+    $(`chip-${x}`).classList.toggle('active', x === m);
+  });
+  const tags = { flat:'Flat minutes', tiered:'Tiered by pay band', pct:'Percentage-based', pto:'PTO donation' };
+  $('s-model-tag').textContent = tags[m];
+  calcSingle();
+}
+
+function syncRange() {
+  const v = $('s-minutes').value;
+  $('range-display').textContent = `${v} minute${v>1?'s':''} per shift`;
+}
+function syncPct() {
+  const v = parseFloat($('s-pct').value).toFixed(2);
+  $('pct-display').textContent = `${v}% of paid hours`;
+}
+
+// ── PRESETS ──
+const presets = {
+  cna:    { role:'CNA / Patient Care Tech', wage:21 },
+  rn:     { role:'Registered Nurse (RN)', wage:45 },
+  lpn:    { role:'LPN', wage:33 },
+  rt:     { role:'Respiratory Therapist', wage:40 },
+  lab:    { role:'Lab / Imaging Tech', wage:38 },
+  admin:  { role:'Admin / Clerical', wage:25 },
+  ma:     { role:'Medical Assistant', wage:24 },
+  remote: { role:'Remote Worker', wage:null },
+};
+function loadPreset(k) {
+  const p = presets[k];
+  $('s-role').value = p.role;
+  if (p.wage !== null) {
+    $('s-wage').value = p.wage;
+    $('remote-note').style.display = 'none';
+  } else {
+    $('s-wage').value = '';
+    $('s-wage').placeholder = 'Enter wage';
+    $('s-wage').focus();
+    $('remote-note').style.display = 'block';
+  }
+  calcSingle();
+}
+
+// ── TIERED helper ──
+function tieredMinutes(wage) {
+  const w = parseFloat(wage);
+  if (w < 25) return parseInt($('t-low').value) || 3;
+  if (w <= 40) return parseInt($('t-mid').value) || 7;
+  return parseInt($('t-high').value) || 12;
+}
+
+// ── SINGLE CALC ──
+function calcSingle() {
+  const wage   = parseFloat($('s-wage').value) || 0;
+  const count  = parseFloat($('s-count').value) || 0;
+  const spw    = parseFloat($('s-spw').value) || 5;
+  const wpy    = parseFloat($('s-wpy').value) || 50;
+  const part   = (parseFloat($('s-part').value) || 0) / 100;
+  const shifts = spw * wpy;
+
+  let savPerEmp = 0, note = '';
+
+  if (currentModel === 'flat') {
+    const mins = parseFloat($('s-minutes').value) || 0;
+    savPerEmp = (mins / 60) * wage * shifts;
+    note = '';
+  } else if (currentModel === 'tiered') {
+    const mins = tieredMinutes(wage);
+    savPerEmp = (mins / 60) * wage * shifts;
+    const band = wage < 25 ? 'under $25/hr' : wage <= 40 ? '$25–$40/hr' : '$40+/hr';
+    $('tier-assigned').innerHTML = `<strong>Auto-assigned:</strong> This wage ($${wage}/hr, ${band}) → <strong>${mins} minutes/shift</strong>`;
+    note = `Tiered model: ${mins} min/shift for $${wage}/hr`;
+  } else if (currentModel === 'pct') {
+    const pct = parseFloat($('s-pct').value) / 100;
+    // Derive shift length from the documented pattern (3×12, 4×10, 5×8)
+    // rather than assuming 8h — a 3×12 RN works 1,800 hrs/yr, not 1,200.
+    const hoursPerShift = { 3: 12, 4: 10, 5: 8 }[spw] || 8;
+    const annHours = shifts * hoursPerShift;
+    savPerEmp = annHours * pct * wage;
+    note = `${(pct*100).toFixed(2)}% of ${annHours.toLocaleString()} annual paid hours (${spw}×${hoursPerShift} pattern)`;
+  } else if (currentModel === 'pto') {
+    const hrs = parseFloat($('s-pto').value) || 0;
+    savPerEmp = hrs * wage;
+    note = `${hrs} PTO hours donated × $${wage}/hr`;
+  }
+
+  const load = getLoadFactor();
+  const participants = count * part;
+  const annual = savPerEmp * participants * load;
+  const quarter = annual / 4;
+  const yr3 = annual * 3;
+  const pct78 = Math.min((annual / getDeficit()) * 100, 100);
+
+  $('r-pey').textContent = fmt(savPerEmp * load);
+  $('r-pey-sub').textContent = note ? `(${note})` : `${Math.round(participants)} of ${count} participate`;
+  $('r-qtr').textContent = fmt(quarter);
+  $('r-ann').textContent = fmt(annual);
+  $('r-3yr').textContent = fmt(yr3);
+
+  // FTE-equivalent: annual savings expressed as base-wage FTE-years at this role's wage.
+  const fteCost = wage * 2080;
+  const fteEl = $('r-fte');
+  if (fteEl) fteEl.textContent = (wage > 0 && annual > 0) ? `≈ ${(annual / fteCost).toFixed(1)} FTE-years of base wages` : '';
+  $('deficit-pct-val').textContent = pct78.toFixed(3) + '%';
+  $('deficit-bar').style.width = Math.min(pct78 * 5, 100) + '%';
+
+  // Contribution as share of this role's annual pay (the fairness lens).
+  // Uses the employee's own pay contribution, not the employer FICA uplift.
+  const hoursPerShiftS = { 3: 12, 4: 10, 5: 8 }[spw] || 8;
+  const annualComp = wage * shifts * hoursPerShiftS;
+  const sharePct = annualComp > 0 ? (savPerEmp / annualComp) * 100 : 0;
+  const shareValEl = $('r-share-val');
+  const shareNoteEl = $('r-share-note');
+  if (shareValEl) {
+    shareValEl.textContent = wage > 0 ? sharePct.toFixed(2) + '%' : '—';
+    let msg = '';
+    if (wage > 0) {
+      msg = `of a ~${fmt(annualComp)}/yr income. `;
+      if (sharePct > 1.5) {
+        msg += 'Above the 1% proportional benchmark — check that salaried and higher-paid staff are asked for a comparable share (Higher Earners tab) before adopting this.';
+        shareValEl.style.color = 'var(--warn)';
+      } else {
+        msg += 'At or near a proportional share of pay.';
+        shareValEl.style.color = 'var(--accent)';
+      }
+    }
+    if (shareNoteEl) shareNoteEl.textContent = msg;
+  }
+
+  combinedState.single = annual;
+  updateCombined();
+
+  const en = $('s-equity-note');
+  if (note) { en.textContent = note; en.style.display = 'block'; }
+  else { en.style.display = 'none'; }
+}
+
+// ── MULTI-ROLE ──
+let multiRows = [];
+let rowId = 0;
+const defaultRoles = [
+  { role:'CNA / PCT', wage:21, count:80, mins:5, spw:5, wpy:50, part:75 },
+  { role:'RN (Staff)', wage:45, count:120, mins:10, spw:3, wpy:50, part:70 },
+  { role:'LPN', wage:33, count:40, mins:7, spw:5, wpy:50, part:75 },
+  { role:'Admin / Clerical', wage:25, count:60, mins:5, spw:5, wpy:50, part:80 },
+  { role:'Resp. Therapist', wage:40, count:30, mins:10, spw:5, wpy:50, part:65 },
+  { role:'Remote Worker', wage:0, count:25, mins:5, spw:5, wpy:50, part:85, isRemote:true },
+];
+
+function addMultiRow(d) {
+  const id = rowId++;
+  const r = d || { role:'New Role', wage:30, count:20, mins:5, spw:5, wpy:50, part:75 };
+  multiRows.push({ id, ...r });
+  renderMultiTable();
+}
+
+function renderMultiTable() {
+  const tbody = $('multi-tbody');
+  tbody.innerHTML = '';
+  multiRows.forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.isRemote) tr.style.background = '#f5f3ff';
+    const wagePlaceholder = r.isRemote && !r.wage ? ' placeholder="Enter wage"' : '';
+    const wageVal = r.wage || (r.isRemote ? '' : 0);
+    const remoteTag = r.isRemote ? `<span style="font-size:10px;background:#ede9ff;color:#4c3fac;border-radius:10px;padding:1px 7px;margin-left:6px;font-weight:600;letter-spacing:0.04em;vertical-align:middle;">PILOT</span>` : '';
+    const nm = r.role || 'role';
+    tr.innerHTML = `
+      <td><div style="display:flex;align-items:center;gap:6px;"><input value="${r.role}" aria-label="Role name" onchange="updateRow(${r.id},'role',this.value)" style="min-width:130px">${remoteTag}</div></td>
+      <td><input type="number" value="${wageVal}"${wagePlaceholder} min="0" max="250" step="0.5" aria-label="Hourly wage for ${nm}" onchange="updateRow(${r.id},'wage',this.value);updateRow(${r.id},'isRemote',false)" style="width:80px;${r.isRemote && !r.wage ? 'border-color:#7c6fcd;' : ''}"></td>
+      <td><input type="number" value="${r.count}" min="1" aria-label="Number of employees for ${nm}" onchange="updateRow(${r.id},'count',this.value)" style="width:80px"></td>
+      <td>
+        <select aria-label="Minutes per shift for ${nm}" onchange="updateRow(${r.id},'mins',this.value)" style="width:72px">
+          ${[3,5,7,8,10,12,15].map(m=>`<option value="${m}"${m==r.mins?' selected':''}>${m}</option>`).join('')}
+        </select>
+        <span class="print-val" style="display:none;font-family:'DM Mono',monospace;font-size:13px;">${r.mins}</span>
+      </td>
+      <td>
+        <select aria-label="Shifts per week for ${nm}" onchange="updateRow(${r.id},'spw',this.value)" style="width:60px">
+          ${[3,4,5].map(s=>`<option value="${s}"${s==r.spw?' selected':''}>${s}</option>`).join('')}
+        </select>
+        <span class="print-val" style="display:none;font-family:'DM Mono',monospace;font-size:13px;">${r.spw}</span>
+      </td>
+      <td><input type="number" value="${r.wpy}" min="1" max="52" aria-label="Weeks per year for ${nm}" onchange="updateRow(${r.id},'wpy',this.value)" style="width:60px"></td>
+      <td><input type="number" value="${r.part}" min="1" max="100" aria-label="Participation percent for ${nm}" onchange="updateRow(${r.id},'part',this.value)" style="width:65px"></td>
+      <td class="savings-cell" id="mr-ann-${r.id}">${r.isRemote && !r.wage ? '<span style="color:#9a9590;font-size:12px;">enter wage</span>' : '—'}</td>
+      <td class="savings-cell" id="mr-pct-${r.id}" style="color:var(--ink2);">—</td>
+      <td><button type="button" class="del-btn" aria-label="Remove this role row" onclick="delRow(${r.id})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  calcMulti();
+}
+
+function updateRow(id, field, val) {
+  const r = multiRows.find(x => x.id === id);
+  if (r) r[field] = isNaN(parseFloat(val)) ? val : parseFloat(val);
+  calcMulti();
+}
+
+function delRow(id) {
+  multiRows = multiRows.filter(r => r.id !== id);
+  renderMultiTable();
+}
+
+function calcMulti() {
+  let totalEmp = 0, totalAnn = 0;
+  const load = getLoadFactor();
+  const hps = spw => ({ 3: 12, 4: 10, 5: 8 }[spw] || 8);
+  const shares = []; // { wage, sharePct } for rows with a real wage
+  multiRows.forEach(r => {
+    const shifts = r.spw * r.wpy;
+    const savPerEmp = (r.mins / 60) * r.wage * shifts;
+    const participants = r.count * (r.part / 100);
+    const ann = savPerEmp * participants * load;
+    totalEmp += r.count;
+    totalAnn += ann;
+    const el = $(`mr-ann-${r.id}`);
+    if (el) el.textContent = fmt(ann);
+
+    // Share of pay for this row (employee's own contribution, not FICA uplift).
+    const annualComp = r.wage * shifts * hps(r.spw);
+    const sharePct = annualComp > 0 ? (savPerEmp / annualComp) * 100 : 0;
+    const pel = $(`mr-pct-${r.id}`);
+    if (pel) pel.textContent = (r.wage > 0 && r.count > 0) ? sharePct.toFixed(2) + '%' : '—';
+    if (r.wage > 0 && r.count > 0) shares.push({ wage: r.wage, sharePct, weight: participants });
+  });
+  $('mt-emp').textContent = totalEmp.toLocaleString();
+  $('mt-ann').textContent = fmt(totalAnn);
+  $('mt-qtr').textContent = fmt(totalAnn / 4);
+  $('mt-3yr').textContent = fmt(totalAnn * 3);
+  const pct = (totalAnn / getDeficit()) * 100;
+  $('mt-deficit-pct-val').textContent = pct.toFixed(3) + '%';
+  $('mt-deficit-bar').style.width = Math.min(pct * 5, 100) + '%';
+
+  renderFairness(shares);
+
+  combinedState.multi = totalAnn;
+  updateCombined();
+}
+
+// Fairness verdict: do lower-paid staff give up a larger share of pay than higher-paid staff?
+// Uses a headcount-weighted split at the weighted-mean wage, so the trend reflects
+// real people rather than a single endpoint role. The per-row % column shows detail.
+function renderFairness(shares) {
+  const icon = $('fairness-icon'), label = $('fairness-label'),
+        detail = $('fairness-detail'), box = $('fairness-verdict');
+  if (!icon) return;
+  const usable = shares.filter(s => s.sharePct > 0 && s.weight > 0);
+  const distinctWages = new Set(usable.map(s => s.wage));
+  if (usable.length < 2 || distinctWages.size < 2) {
+    icon.textContent = '—';
+    label.textContent = 'Add two or more paid roles at different wages to evaluate fairness';
+    label.style.color = 'var(--ink)';
+    detail.textContent = 'Fairness is a comparison across income levels, so it needs at least two roles at different wages with headcounts entered.';
+    box.style.background = 'var(--surface2)';
+    box.style.borderColor = 'var(--border)';
+    return;
+  }
+  const totW = usable.reduce((s, x) => s + x.weight, 0);
+  const wBar = usable.reduce((s, x) => s + x.wage * x.weight, 0) / totW;
+  const grp = pred => {
+    const g = usable.filter(pred);
+    const w = g.reduce((s, x) => s + x.weight, 0);
+    return w > 0 ? g.reduce((s, x) => s + x.sharePct * x.weight, 0) / w : null;
+  };
+  const lowShare = grp(x => x.wage < wBar);
+  const highShare = grp(x => x.wage >= wBar);
+  if (lowShare === null || highShare === null) {
+    // Everyone on the same side of the mean; fall back to endpoint comparison.
+    const lo = usable.reduce((a, b) => b.wage < a.wage ? b : a);
+    const hi = usable.reduce((a, b) => b.wage > a.wage ? b : a);
+    return verdict(lo.sharePct, hi.sharePct, `$${lo.wage}/hr`, `$${hi.wage}/hr`);
+  }
+  verdict(lowShare, highShare, 'lower-paid staff', 'higher-paid staff');
+
+  function verdict(low, high, lowName, highName) {
+    const gap = low - high; // >0 → lower-paid give more → regressive
+    const tol = 0.15;
+    const f = n => n.toFixed(2) + '%';
+    const lowLine = `${lowName[0].toUpperCase() + lowName.slice(1)} give <strong>${f(low)}</strong> of pay`;
+    const highLine = `${highName} give <strong>${f(high)}</strong>`;
+    let ic, lb, col, bg, bd, msg;
+    if (gap > tol) {
+      ic = '🔴'; lb = 'Regressive'; col = 'var(--red)'; bg = '#fdf2f2'; bd = '#f0c4c4';
+      msg = `${lowLine} — more than the ${highLine}. Lower-paid staff are shouldering a larger share of their income. Reduce their minutes, move them toward the proportional (percentage) model, or ask higher-paid and salaried staff for a comparable share.`;
+    } else if (gap < -tol) {
+      ic = '🟢'; lb = 'Progressive'; col = 'var(--accent)'; bg = 'var(--accent3)'; bd = 'var(--accent2)';
+      msg = `${lowLine} — less than the ${highLine}. Higher earners are giving a larger share of income, keeping the burden off lower-paid staff.`;
+    } else {
+      ic = '🟡'; lb = 'Approximately proportional'; col = 'var(--warn)'; bg = 'var(--warn-light)'; bd = '#e8c99a';
+      msg = `${lowLine}, about the same as the ${highLine}. Everyone is giving a similar share of income.`;
+    }
+    icon.textContent = ic;
+    label.textContent = lb;
+    label.style.color = col;
+    detail.innerHTML = msg;
+    box.style.background = bg;
+    box.style.borderColor = bd;
+  }
+}
+
+// ── COMBINED BAR ──
+const combinedState = { single: 0, multi: 0, top10: 0 };
+
+function getDeficit() {
+  return parseFloat($('deficit-input').value) || 50000000;
+}
+
+// Employer payroll-tax uplift on savings (FICA employer match, 7.65%).
+function getLoadFactor() {
+  return $('load-fica') && $('load-fica').checked ? 1.0765 : 1;
+}
+
+function fmtDeficit(n) {
+  return n >= 1e9 ? `$${(n/1e9).toFixed(1)}B` : `$${(n/1e6).toFixed(0)}M`;
+}
+
+function updateDeficitLabel() {
+  const d = getDeficit();
+  const label = fmtDeficit(d);
+
+  // Combined bar top label
+  $('deficit-bar-label').textContent = 'vs ' + label + ' operating loss';
+
+  // Per-tab "% of $XM deficit addressed by this role group" — above single + higher earners bar
+  document.querySelectorAll('.deficit-vs-label').forEach(el => {
+    const txt = el.textContent;
+    if (txt.includes('Higher Earners')) {
+      el.textContent = 'Higher Earners contribution vs ' + label + ' operating loss';
+    } else if (txt.includes('Combined') || txt.includes('vs')) {
+      el.textContent = 'vs ' + label + ' operating loss';
+    } else {
+      el.textContent = '% of ' + label + ' deficit addressed by this role group';
+    }
+  });
+
+  // "Deficit reference:" line below single role bar
+  document.querySelectorAll('.deficit-pct-label').forEach(el => {
+    el.textContent = 'Deficit reference: ' + label + ' operating loss';
+  });
+
+  // Multi-role summary "% of $XM Deficit" stat label
+  document.querySelectorAll('.deficit-pct-label2').forEach(el => {
+    el.textContent = '% of ' + label + ' Deficit';
+  });
+
+  updateCombined();
+}
+
+function updateCombined() {
+  const d = getDeficit();
+  const total = combinedState.single + combinedState.multi + combinedState.top10;
+  const pct = (total / d) * 100;
+  $('combined-ann').textContent = fmt(total);
+  $('combined-pct').textContent = pct.toFixed(2) + '%';
+  $('combined-bar').style.width = Math.min(pct * 3, 100) + '%';
+  $('combined-single').textContent = fmt(combinedState.single);
+  $('combined-multi').textContent = fmt(combinedState.multi);
+  $('combined-top10').textContent = fmt(combinedState.top10);
+}
+let t10Model = 'pto';
+
+const t10DefaultBands = [
+  { role:'C-Suite / Executive (CMO, CNO, CFO)', salary:425000, count:5 },
+  { role:'VP / Associate VP', salary:210000, count:12 },
+  { role:'Employed Physician', salary:350000, count:30 },
+  { role:'Director Level', salary:145000, count:40 },
+  { role:'Senior Manager', salary:118000, count:45 },
+  { role:'Experienced RN (top pay band)', salary:98000, count:68 },
+];
+
+function setTop10Model(m) {
+  t10Model = m;
+  $('t10-model-pto').style.display = m === 'pto' ? 'block' : 'none';
+  $('t10-model-sal').style.display = m === 'sal' ? 'block' : 'none';
+  $('t10-chip-pto').classList.toggle('active', m === 'pto');
+  $('t10-chip-sal').classList.toggle('active', m === 'sal');
+  calcTop10();
+}
+
+function syncTop10PTO() {
+  const v = $('t10-pto-hrs').value;
+  const weeks = Math.round(v / 40 * 10) / 10;
+  $('t10-pto-display').textContent = `${v} hours (≈ ${weeks} week${weeks !== 1 ? 's' : ''})`;
+}
+
+function syncTop10Sal() {
+  const v = parseFloat($('t10-sal-pct').value).toFixed(1);
+  $('t10-sal-display').textContent = `${v}% salary reduction`;
+}
+
+function renderTop10Table() {
+  const tbody = $('t10-tbody');
+  const ptohrs = parseFloat($('t10-pto-hrs').value) || 40;
+  const salPct = parseFloat($('t10-sal-pct').value) / 100 || 0.01;
+  tbody.innerHTML = '';
+  t10DefaultBands.forEach((b, i) => {
+    const hrly = (b.salary / 2080).toFixed(0);
+    const ptoVal = fmt(ptohrs * (b.salary / 2080) * b.count);
+    const salVal = fmt(b.salary * salPct * b.count);
+    const tr = document.createElement('tr');
+    const bn = b.role || 'band';
+    tr.innerHTML = `
+      <td><input value="${b.role}" aria-label="Role or band name" onchange="t10DefaultBands[${i}].role=this.value;calcTop10()" style="min-width:200px;font-size:13px;"></td>
+      <td><input type="number" value="${b.salary}" min="0" step="1000" aria-label="Annual salary for ${bn}" onchange="t10DefaultBands[${i}].salary=parseFloat(this.value)||0;renderTop10Table();calcTop10()" style="width:110px;font-size:13px;"></td>
+      <td id="t10-hrly-${i}" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--ink3);">$${hrly}/hr</td>
+      <td><input type="number" value="${b.count}" min="0" aria-label="Number of people in ${bn}" onchange="t10DefaultBands[${i}].count=parseFloat(this.value)||0;calcTop10()" style="width:70px;font-size:13px;"></td>
+      <td class="savings-cell" id="t10-pto-${i}">${ptoVal}</td>
+      <td class="savings-cell" id="t10-sal-${i}">${salVal}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function calcTop10() {
+  const total = parseFloat($('t10-total').value) || 0;
+  const pct = parseFloat($('t10-pct').value) / 100 || 0.1;
+  const part = parseFloat($('t10-part').value) / 100 || 0.8;
+  const groupSize = Math.round(total * pct);
+  const ptohrs = parseFloat($('t10-pto-hrs').value) || 40;
+  const salPct = parseFloat($('t10-sal-pct').value) / 100 || 0.01;
+
+  // update table cells
+  let rowTotal = 0;
+  let totalAnn = 0;
+  const load = getLoadFactor();
+  t10DefaultBands.forEach((b, i) => {
+    rowTotal += b.count;
+    const hrly = b.salary / 2080;
+    const ptoVal = ptohrs * hrly * b.count * part;
+    const salVal = b.salary * salPct * b.count * part;
+    const activeVal = (t10Model === 'pto' ? ptoVal : salVal) * load;
+    totalAnn += activeVal;
+    const hrlyEl = $(`t10-hrly-${i}`);
+    const ptoEl = $(`t10-pto-${i}`);
+    const salEl = $(`t10-sal-${i}`);
+    if (hrlyEl) hrlyEl.textContent = `$${hrly.toFixed(0)}/hr`;
+    if (ptoEl) { ptoEl.textContent = fmt(ptohrs * hrly * b.count * part); ptoEl.style.opacity = t10Model==='pto'?'1':'0.35'; }
+    if (salEl) { salEl.textContent = fmt(b.salary * salPct * b.count * part); salEl.style.opacity = t10Model==='sal'?'1':'0.35'; }
+  });
+
+  $('t10-groupsize').textContent = groupSize.toLocaleString();
+  $('t10-rowtotal').textContent = rowTotal.toLocaleString();
+
+  // Warn when the salary-band rows don't reconcile with the configured group size.
+  const mm = $('t10-mismatch');
+  const diff = rowTotal - groupSize;
+  if (Math.abs(diff) >= 1 && groupSize > 0) {
+    const dir = diff > 0 ? 'more' : 'fewer';
+    mm.textContent = `⚠ Band rows sum to ${rowTotal.toLocaleString()} people — ${Math.abs(diff).toLocaleString()} ${dir} than the configured top-earner group of ${groupSize.toLocaleString()}. Savings below reflect the band rows as entered; adjust either figure so they reconcile.`;
+    mm.style.display = 'block';
+  } else {
+    mm.style.display = 'none';
+  }
+
+  const participants = Math.round(rowTotal * part);
+  $('t10-r-emp').textContent = participants.toLocaleString();
+  $('t10-r-ann').textContent = fmt(totalAnn);
+  $('t10-r-qtr').textContent = fmt(totalAnn / 4);
+  $('t10-r-3yr').textContent = fmt(totalAnn * 3);
+
+  const defPct = (totalAnn / getDeficit()) * 100;
+  $('t10-deficit-pct-val').textContent = defPct.toFixed(2) + '%';
+  $('t10-deficit-bar').style.width = Math.min(defPct * 4, 100) + '%';
+
+  combinedState.top10 = totalAnn;
+  updateCombined();
+
+  // equity message
+  const avgSal = t10DefaultBands.reduce((s,b)=>s+b.salary*b.count,0) / Math.max(rowTotal,1);
+  const avgHrly = avgSal / 2080;
+  const perEmpAnn = t10Model === 'pto' ? ptohrs * avgHrly : avgSal * salPct;
+  const methodLabel = t10Model === 'pto'
+    ? `donating ${ptohrs} PTO hours`
+    : `a ${(salPct*100).toFixed(1)}% salary reduction`;
+  $('t10-equity-msg').innerHTML = `
+    <span style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.9;display:block;">
+    This program is designed to be flexible and voluntary, with contribution options that can scale based on individual circumstances and pay levels.<br><br>
+    <strong style="color:rgba(255,255,255,0.5);font-size:11px;">For example:</strong>
+    <ul style="margin:8px 0 10px 16px;font-size:12px;line-height:1.9;">
+      <li>A higher-salaried employee (around <strong style="color:#fff;">$${Math.round(avgSal).toLocaleString()}/year</strong>) contributing ${ptohrs} hours of PTO would equal about <strong style="color:var(--accent2);">${fmt(perEmpAnn)} annually</strong></li>
+      <li>An hourly CNA earning $21/hour contributing 10 minutes per shift would equal about <strong style="color:var(--accent2);">$875 annually</strong></li>
+    </ul>
+    While the dollar amounts differ, each contribution reflects a meaningful and proportional level of participation.<br><br>
+    <strong style="color:rgba(255,255,255,0.85);">Why this matters:</strong> A proportional approach supports fairness across roles while keeping participation fully optional. It provides flexibility, respects individual choice, and helps ensure the program remains equitable across a diverse workforce. When participation reflects a shared effort, it strengthens trust and keeps the focus on collective impact rather than individual contributions.
+    </span>
+  `;
+}
+
+// ── SCENARIO SHARING (single-role config + globals into the URL) ──
+function copyScenarioLink(btn) {
+  const p = new URLSearchParams({
+    role:  $('s-role').value,
+    wage:  $('s-wage').value,
+    count: $('s-count').value,
+    spw:   $('s-spw').value,
+    wpy:   $('s-wpy').value,
+    part:  $('s-part').value,
+    model: currentModel,
+    min:   $('s-minutes').value,
+    pct:   $('s-pct').value,
+    pto:   $('s-pto').value,
+    def:   $('deficit-input').value,
+    fica:  $('load-fica').checked ? '1' : '0'
+  });
+  const url = location.origin + location.pathname + '?' + p.toString();
+  const done = () => {
+    const t = btn.innerHTML;
+    btn.innerHTML = '✓ Link copied';
+    setTimeout(() => { btn.innerHTML = t; }, 1800);
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copy this scenario link:', url));
+  } else {
+    prompt('Copy this scenario link:', url);
+  }
+}
+
+function applyScenarioFromURL() {
+  const p = new URLSearchParams(location.search);
+  if (![...p.keys()].length) return;
+  const set = (id, key) => { if (p.has(key) && $(id)) $(id).value = p.get(key); };
+  set('s-role','role'); set('s-wage','wage'); set('s-count','count');
+  set('s-spw','spw'); set('s-wpy','wpy'); set('s-part','part');
+  set('s-minutes','min'); set('s-pct','pct'); set('s-pto','pto');
+  set('deficit-input','def');
+  if (p.has('fica')) $('load-fica').checked = p.get('fica') === '1';
+  if (p.has('model')) setModel(p.get('model'));
+}
+
+// ── INIT ──
+document.getElementById('yr').textContent = new Date().getFullYear();
+associateLabels();
+initTablistKeys();
+syncRange();
+syncPct();
+syncTop10PTO();
+syncTop10Sal();
+updateDeficitLabel();
+applyScenarioFromURL();
+setModel(currentModel);
+syncRange();
+syncPct();
+calcSingle();
+defaultRoles.forEach(r => addMultiRow(r));
+renderTop10Table();
+calcTop10();
+</script>
+</body>
+</html>

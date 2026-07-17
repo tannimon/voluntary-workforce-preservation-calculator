@@ -1,0 +1,31 @@
+<svg width="1280" height="440" viewBox="0 0 1280 440" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="frame"><rect width="1280" height="440" rx="0"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <!-- ground -->
+    <rect width="1280" height="440" fill="#1a1814"/>
+
+    <!-- decorative concentric rings, echoing the app header -->
+    <circle cx="1180" cy="30" r="150" fill="none" stroke="#52b788" stroke-opacity="0.15" stroke-width="40"/>
+    <circle cx="1200" cy="470" r="90" fill="none" stroke="#52b788" stroke-opacity="0.10" stroke-width="25"/>
+    <circle cx="1090" cy="250" r="60" fill="none" stroke="#b7e4c7" stroke-opacity="0.08" stroke-width="16"/>
+
+    <!-- accent rule -->
+    <rect x="72" y="96" width="56" height="4" rx="2" fill="#52b788"/>
+
+    <!-- eyebrow -->
+    <text x="72" y="130" font-family="DM Mono" font-size="15" letter-spacing="3" fill="#52b788">WORKFORCE PRESERVATION MODELING · PAY-EQUITY ANALYSIS</text>
+
+    <!-- title -->
+    <text x="70" y="210" font-family="DM Serif Display" font-size="70" fill="#ffffff">Voluntary Workforce</text>
+    <text x="70" y="284" font-family="DM Serif Display" font-size="70" fill="#ffffff">Preservation Calculator</text>
+
+    <!-- subtitle -->
+    <text x="72" y="330" font-family="DM Sans" font-size="21" fill="#c9c4bb">Model voluntary contribution scenarios as an alternative to layoffs —</text>
+    <text x="72" y="360" font-family="DM Sans" font-size="21" fill="#c9c4bb">evaluated by both financial impact and distributional fairness.</text>
+
+    <!-- feature strip -->
+    <text x="72" y="410" font-family="DM Mono" font-size="14" letter-spacing="1.5" fill="#7d8a80">no build&#160;&#160;·&#160;&#160;zero dependencies&#160;&#160;·&#160;&#160;private by construction&#160;&#160;·&#160;&#160;WCAG AA</text>
+  </g>
+</svg>
