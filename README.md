@@ -72,3 +72,9 @@ MIT — see `LICENSE`. This is a permissive license: anyone may use, modify, red
 This software is provided for educational and decision-support purposes only. It does not constitute legal, human resources, payroll, labor relations, or financial advice. Organizations should consult appropriate legal, HR, payroll, and labor professionals before implementing any workforce program. Use of this software does not imply endorsement of any employment practice or policy.
 
 All calculations are gross payroll estimates and do not account for morale, turnover, recruitment cost, or care-delivery impact. See `DISCLAIMER.md` for the full statement.
+
+## Built by
+
+Tanni — clinical quality abstractor, vibe code hobbyist, and web design enthusiast. She loves her dog, Sawyer.
+
+Chief Morale Officer duties handled by Sawyer, who appears when you least expect him.
